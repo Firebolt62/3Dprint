@@ -1,0 +1,809 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Contour — 3D Printed Goods</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #17181A;
+    --panel: #1E1D1A;
+    --panel-2: #242320;
+    --text: #F2EFE9;
+    --muted: #9A968C;
+    --accent: #E8622C;
+    --accent-teal: #4FA69A;
+    --line: rgba(242,239,233,0.12);
+    --line-strong: rgba(242,239,233,0.22);
+    --radius: 3px;
+    box-sizing: border-box;
+    padding-top: env(safe-area-inset-top, 0px);
+    padding-bottom: env(safe-area-inset-bottom, 0px);
+  }
+  * { box-sizing: inherit; }
+  html { scroll-padding-top: env(safe-area-inset-top, 0px); }
+  html, body { height: 100%; }
+  body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Inter', system-ui, -apple-system, sans-serif;
+    -webkit-font-smoothing: antialiased;
+  }
+  h1, h2, h3, .display {
+    font-family: 'Space Grotesk', system-ui, sans-serif;
+    font-weight: 600;
+    letter-spacing: -0.01em;
+    margin: 0;
+  }
+  a { color: inherit; }
+  button { font-family: inherit; cursor: pointer; }
+  img { max-width: 100%; display: block; }
+
+  .wrap { max-width: 1080px; margin: 0 auto; padding: 0 28px; }
+
+  /* ---------- header ---------- */
+  header.site {
+    border-bottom: 1px solid var(--line);
+    padding: 22px 0;
+  }
+  header.site .wrap { display: flex; align-items: center; justify-content: space-between; }
+  .brand { display: flex; align-items: center; gap: 10px; font-size: 20px; font-weight: 700; }
+  .brand .mark { width: 22px; height: 22px; flex-shrink: 0; }
+  .brand .mark circle { fill: none; stroke: var(--accent); stroke-width: 1.4; }
+  nav.top a {
+    text-decoration: none;
+    color: var(--muted);
+    font-size: 14px;
+    padding: 8px 0;
+  }
+
+  /* ---------- hero ---------- */
+  .hero {
+    position: relative;
+    padding: 64px 0 56px;
+    overflow: hidden;
+  }
+  .hero .wrap { display: grid; grid-template-columns: 1.1fr 0.9fr; gap: 40px; align-items: center; }
+  .hero h1 { font-size: clamp(34px, 5vw, 54px); line-height: 1.05; max-width: 11ch; }
+  .hero p.lede { color: var(--muted); font-size: 17px; max-width: 46ch; margin-top: 18px; line-height: 1.55; }
+  .hero .cta-row { margin-top: 28px; display: flex; gap: 14px; align-items: center; }
+  .hero .cta-row .fine { font-size: 13px; color: var(--muted); }
+  #contourWrap { width: 100%; aspect-ratio: 1/1; max-width: 380px; margin: 0 auto; }
+
+  .btn {
+    display: inline-flex; align-items: center; gap: 8px;
+    background: var(--accent); color: #17181A;
+    border: none; padding: 12px 20px; border-radius: var(--radius);
+    font-weight: 600; font-size: 14px; text-decoration: none;
+    transition: transform .15s ease, background .15s ease;
+  }
+  .btn:hover { background: #f17240; }
+  .btn:active { transform: scale(0.98); }
+  .btn.ghost {
+    background: transparent; color: var(--text);
+    border: 1px solid var(--line-strong);
+  }
+  .btn.ghost:hover { border-color: var(--text); background: transparent; }
+  .btn.small { padding: 8px 14px; font-size: 13px; }
+  .btn:disabled { opacity: .4; cursor: not-allowed; }
+  .btn.teal { background: var(--accent-teal); }
+  .btn.teal:hover { background: #62bdb0; }
+  .btn.danger { background: transparent; color: #d96b5e; border: 1px solid rgba(217,107,94,0.4); }
+
+  /* ---------- banner ---------- */
+  .banner {
+    background: var(--panel-2);
+    border-bottom: 1px solid var(--line);
+    font-size: 13.5px;
+    color: var(--muted);
+    padding: 10px 0;
+    text-align: center;
+  }
+  .banner strong { color: var(--text); }
+
+  /* ---------- catalog ---------- */
+  section.catalog { padding: 8px 0 72px; }
+  .section-head {
+    display: flex; align-items: baseline; justify-content: space-between;
+    margin-bottom: 26px; padding-top: 40px; border-top: 1px solid var(--line);
+  }
+  .section-head h2 { font-size: 22px; }
+  .section-head .count { color: var(--muted); font-size: 13px; }
+
+  .grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 1px;
+    background: var(--line);
+    border: 1px solid var(--line);
+  }
+  .card {
+    background: var(--bg);
+    padding: 22px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+  .card .thumb {
+    width: 100%; aspect-ratio: 4/3;
+    background: var(--panel);
+    border: 1px solid var(--line);
+    display: flex; align-items: center; justify-content: center;
+    overflow: hidden;
+    margin-bottom: 4px;
+  }
+  .card .thumb img { width: 100%; height: 100%; object-fit: cover; }
+  .card .thumb svg { width: 46%; opacity: .35; }
+  .card h3 { font-size: 16.5px; }
+  .card .desc { color: var(--muted); font-size: 13.5px; line-height: 1.5; flex-grow: 1; }
+  .card .row { display: flex; align-items: center; justify-content: space-between; margin-top: 6px; }
+  .card .price { font-family: 'Space Grotesk'; font-weight: 600; font-size: 16px; }
+  .empty-note { color: var(--muted); font-size: 14px; padding: 30px 0; }
+
+  /* ---------- footer ---------- */
+  footer.site {
+    border-top: 1px solid var(--line);
+    padding: 26px 0;
+    color: var(--muted);
+    font-size: 13px;
+    display: flex; justify-content: space-between; align-items: center;
+  }
+  footer.site button.linklike {
+    background: none; border: none; color: var(--muted);
+    font-size: 13px; padding: 0; text-decoration: underline; text-underline-offset: 3px;
+  }
+  footer.site button.linklike:hover { color: var(--text); }
+
+  /* ---------- modal ---------- */
+  .overlay {
+    position: fixed; inset: 0; background: rgba(10,10,9,0.72);
+    display: none; align-items: center; justify-content: center;
+    padding: 20px; z-index: 50;
+  }
+  .overlay.open { display: flex; }
+  .modal {
+    background: var(--panel); border: 1px solid var(--line-strong);
+    width: 100%; max-width: 420px; padding: 28px;
+    border-radius: var(--radius);
+    max-height: 90vh; overflow-y: auto;
+  }
+  .modal h3 { font-size: 19px; margin-bottom: 4px; }
+  .modal .sub { color: var(--muted); font-size: 13.5px; margin-bottom: 18px; }
+  .field { margin-bottom: 16px; }
+  .field label { display: block; font-size: 12.5px; color: var(--muted); margin-bottom: 6px; }
+  .field input, .field textarea {
+    width: 100%; background: var(--bg); border: 1px solid var(--line-strong);
+    color: var(--text); padding: 10px 12px; border-radius: var(--radius);
+    font-family: inherit; font-size: 14.5px;
+  }
+  .field input:focus, .field textarea:focus { outline: none; border-color: var(--accent); }
+  .field textarea { resize: vertical; min-height: 64px; }
+  .modal-actions { display: flex; gap: 10px; margin-top: 20px; }
+  .modal-close { position: absolute; top: 18px; right: 18px; background: none; border: none; color: var(--muted); font-size: 20px; }
+  .modal { position: relative; }
+  .confirm-box { text-align: center; padding: 10px 0; }
+  .confirm-box svg { width: 44px; height: 44px; margin: 0 auto 14px; }
+  .confirm-box svg circle { fill: none; stroke: var(--accent-teal); stroke-width: 2; }
+  .confirm-box svg path { fill: none; stroke: var(--accent-teal); stroke-width: 2; stroke-linecap: round; }
+  .error-msg { color: #e08a7d; font-size: 13px; margin-top: 10px; }
+
+  /* ---------- admin ---------- */
+  #adminView { display: none; min-height: 100%; }
+  #adminView.open { display: block; }
+  #storefrontView.hidden { display: none; }
+
+  .admin-header {
+    border-bottom: 1px solid var(--line); padding: 20px 0;
+  }
+  .admin-header .wrap { display: flex; justify-content: space-between; align-items: center; }
+  .admin-tabs { display: flex; gap: 4px; margin: 28px 0 22px; border-bottom: 1px solid var(--line); }
+  .admin-tabs button {
+    background: none; border: none; color: var(--muted);
+    padding: 10px 16px; font-size: 14px; border-bottom: 2px solid transparent;
+    margin-bottom: -1px;
+  }
+  .admin-tabs button.active { color: var(--text); border-bottom-color: var(--accent); }
+
+  table.data { width: 100%; border-collapse: collapse; font-size: 14px; }
+  table.data th {
+    text-align: left; color: var(--muted); font-weight: 500; font-size: 12.5px;
+    text-transform: none; padding: 10px 12px; border-bottom: 1px solid var(--line);
+  }
+  table.data td { padding: 12px; border-bottom: 1px solid var(--line); vertical-align: middle; }
+  table.data tr:last-child td { border-bottom: none; }
+  .cust-name { font-weight: 600; }
+  .muted-sm { color: var(--muted); font-size: 12.5px; }
+
+  .switch { position: relative; display: inline-flex; align-items: center; gap: 9px; cursor: pointer; user-select: none; }
+  .switch input { display: none; }
+  .switch .track {
+    width: 38px; height: 21px; background: var(--panel-2);
+    border: 1px solid var(--line-strong); border-radius: 20px; position: relative;
+    transition: background .15s ease, border-color .15s ease;
+  }
+  .switch .track::after {
+    content: ""; position: absolute; top: 2px; left: 2px;
+    width: 15px; height: 15px; border-radius: 50%; background: var(--muted);
+    transition: transform .15s ease, background .15s ease;
+  }
+  .switch input:checked + .track { background: rgba(79,166,154,0.18); border-color: var(--accent-teal); }
+  .switch input:checked + .track::after { transform: translateX(17px); background: var(--accent-teal); }
+  .switch .lbl { font-size: 12.5px; color: var(--muted); min-width: 30px; }
+
+  .item-row-edit { display: grid; grid-template-columns: 1.3fr 0.7fr 1.6fr 1.3fr 0.7fr auto; gap: 8px; align-items: center; }
+  .item-row-edit input { background: var(--bg); border: 1px solid var(--line-strong); color: var(--text); padding: 7px 9px; border-radius: var(--radius); font-size: 13px; width: 100%; font-family: inherit; }
+  .add-item-form {
+    background: var(--panel); border: 1px solid var(--line); border-radius: var(--radius);
+    padding: 18px; margin-bottom: 24px;
+  }
+  .add-item-form h3 { font-size: 14px; margin-bottom: 14px; }
+  .add-item-form .grid-fields { display: grid; grid-template-columns: 1.3fr 0.7fr 1.6fr 1.3fr auto; gap: 10px; align-items: end; }
+
+  .login-wrap { max-width: 360px; margin: 90px auto; padding: 0 20px; }
+  .login-wrap h2 { font-size: 22px; margin-bottom: 6px; }
+  .login-wrap p { color: var(--muted); font-size: 14px; margin-bottom: 22px; }
+
+  .toast {
+    position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%) translateY(10px);
+    background: var(--panel-2); border: 1px solid var(--line-strong); color: var(--text);
+    padding: 11px 18px; border-radius: var(--radius); font-size: 13.5px;
+    opacity: 0; pointer-events: none; transition: opacity .2s ease, transform .2s ease;
+    z-index: 100;
+  }
+  .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+
+  @media (max-width: 760px) {
+    .hero .wrap { grid-template-columns: 1fr; }
+    #contourWrap { max-width: 240px; order: -1; }
+    .grid { grid-template-columns: 1fr 1fr; }
+    .item-row-edit, .add-item-form .grid-fields { grid-template-columns: 1fr; }
+  }
+  @media (max-width: 480px) {
+    .grid { grid-template-columns: 1fr; }
+  }
+</style>
+</head>
+<body>
+
+<!-- ============ STOREFRONT ============ -->
+<div id="storefrontView">
+
+  <div class="banner" id="connBanner" style="display:none;">
+    <strong>Backend not connected yet.</strong> Showing sample items — ordering is disabled until the Google Sheet is wired up.
+  </div>
+
+  <header class="site">
+    <div class="wrap">
+      <div class="brand">
+        <svg class="mark" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/></svg>
+        <span id="shopNameLabel">Contour</span>
+      </div>
+      <nav class="top"><a href="#catalog">Catalog</a></nav>
+    </div>
+  </header>
+
+  <section class="hero">
+    <div class="wrap">
+      <div>
+        <h1>Small-batch prints,<br>made to order.</h1>
+        <p class="lede">Every piece is printed after you order it — pick something below, tell me your name, and I'll get it on the plate.</p>
+        <div class="cta-row">
+          <a href="#catalog" class="btn">Browse the catalog</a>
+          <span class="fine">Usually printed within a few days</span>
+        </div>
+      </div>
+      <div id="contourWrap"></div>
+    </div>
+  </section>
+
+  <section class="catalog wrap" id="catalog">
+    <div class="section-head">
+      <h2>Available now</h2>
+      <span class="count" id="itemCount"></span>
+    </div>
+    <div class="grid" id="catalogGrid"></div>
+    <div class="empty-note" id="emptyNote" style="display:none;">Nothing listed yet — check back soon.</div>
+  </section>
+
+  <footer class="site wrap">
+    <span id="footerNote">Contour Prints</span>
+    <button class="linklike" id="ownerLink">Shop owner</button>
+  </footer>
+</div>
+
+<!-- ============ ORDER MODAL ============ -->
+<div class="overlay" id="orderOverlay">
+  <div class="modal">
+    <button class="modal-close" id="closeOrderModal">&times;</button>
+    <div id="orderFormStep">
+      <h3 id="orderItemName">Item</h3>
+      <div class="sub" id="orderItemPrice"></div>
+      <div class="field">
+        <label for="custName">Your name</label>
+        <input type="text" id="custName" placeholder="What should we call this order?">
+      </div>
+      <div class="field">
+        <label for="custNotes">Notes (color, size, anything else) — optional</label>
+        <textarea id="custNotes" placeholder="e.g. in black if you have it"></textarea>
+      </div>
+      <div id="orderError" class="error-msg" style="display:none;"></div>
+      <div class="modal-actions">
+        <button class="btn" id="submitOrder" style="flex:1;">Place order</button>
+      </div>
+    </div>
+    <div id="orderConfirmStep" style="display:none;">
+      <div class="confirm-box">
+        <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M8 12.5l2.5 2.5L16 9"/></svg>
+        <h3>Order placed</h3>
+        <p class="sub" id="confirmText"></p>
+        <button class="btn" id="closeConfirm" style="width:100%;margin-top:6px;">Done</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ============ ADMIN: LOGIN ============ -->
+<div id="adminView">
+  <div id="adminLoginScreen" class="login-wrap">
+    <h2>Host panel</h2>
+    <p>Sign in to manage items and orders.</p>
+    <div class="field">
+      <label for="adminPass">Password</label>
+      <input type="password" id="adminPass">
+    </div>
+    <div id="loginError" class="error-msg" style="display:none;"></div>
+    <div style="display:flex; gap:10px; margin-top:18px;">
+      <button class="btn" id="doLogin" style="flex:1;">Sign in</button>
+      <button class="btn ghost" id="backToStore">Back to shop</button>
+    </div>
+  </div>
+
+  <div id="adminDashboard" style="display:none;">
+    <div class="admin-header">
+      <div class="wrap">
+        <div class="brand" style="font-size:17px;">
+          <svg class="mark" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/></svg>
+          Host panel
+        </div>
+        <div style="display:flex; gap:10px;">
+          <button class="btn ghost small" id="viewShopBtn">View shop</button>
+          <button class="btn ghost small" id="logoutBtn">Sign out</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="wrap">
+      <div class="admin-tabs">
+        <button class="active" data-tab="orders">Orders</button>
+        <button data-tab="items">Items &amp; prices</button>
+      </div>
+
+      <div id="ordersTab">
+        <table class="data" id="ordersTable">
+          <thead><tr><th>Customer</th><th>Item</th><th>Price (KSh)</th><th>Notes</th><th>When</th><th>Paid</th><th></th></tr></thead>
+          <tbody id="ordersBody"></tbody>
+        </table>
+        <div class="empty-note" id="ordersEmpty" style="display:none;">No orders yet.</div>
+      </div>
+
+      <div id="itemsTab" style="display:none;">
+        <div class="add-item-form">
+          <h3>Add a new item</h3>
+          <div class="grid-fields">
+            <div class="field" style="margin:0;"><label>Name</label><input id="newItemName" type="text"></div>
+            <div class="field" style="margin:0;"><label>Price (KSh)</label><input id="newItemPrice" type="number" step="0.01"></div>
+            <div class="field" style="margin:0;"><label>Description</label><input id="newItemDesc" type="text"></div>
+            <div class="field" style="margin:0;"><label>Image URL (optional)</label><input id="newItemImg" type="text"></div>
+            <button class="btn small" id="addItemBtn">Add item</button>
+          </div>
+        </div>
+        <table class="data" id="itemsTable">
+          <thead><tr><th style="width:22%">Name</th><th style="width:10%">Price (KSh)</th><th style="width:26%">Description</th><th style="width:18%">Image URL</th><th>Live</th><th></th></tr></thead>
+          <tbody id="itemsBody"></tbody>
+        </table>
+        <div class="empty-note" id="itemsEmpty" style="display:none;">No items yet — add your first one above.</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+/* ======================================================
+   CONFIG — replace SCRIPT_URL with your deployed
+   Google Apps Script web app URL (ends in /exec)
+====================================================== */
+const CONFIG = {
+  SCRIPT_URL: "https://script.google.com/macros/s/AKfycbxMaO0LGgFpjLj-9Sj-HR7Fy1n2SM3wxCBCfPq4wY-LbaFSR4tQmH3XELBXJVA26Ocd/exec",
+  SHOP_NAME: "Contour"
+};
+
+const isConnected = CONFIG.SCRIPT_URL && CONFIG.SCRIPT_URL.startsWith("http");
+
+const DEMO_ITEMS = [
+  { ID: "demo1", Name: "Articulated Dragon", Price: 22, Description: "Flexible print-in-place dragon, no assembly needed.", ImageURL: "" },
+  { ID: "demo2", Name: "Low-Poly Planter", Price: 14, Description: "4-inch faceted planter, drainage hole included.", ImageURL: "" },
+  { ID: "demo3", Name: "Desk Cable Comb", Price: 8, Description: "Keeps cables tidy. Several colors on hand.", ImageURL: "" }
+];
+
+let currentItems = [];
+let selectedItem = null;
+let adminToken = sessionStorage.getItem("adminToken") || null;
+
+document.getElementById("shopNameLabel").textContent = CONFIG.SHOP_NAME;
+document.getElementById("footerNote").textContent = CONFIG.SHOP_NAME + " Prints";
+document.title = CONFIG.SHOP_NAME + " — 3D Printed Goods";
+if (!isConnected) document.getElementById("connBanner").style.display = "block";
+
+/* ---------- API ---------- */
+async function api(action, body, isGet, extraParams) {
+  if (!isConnected) throw new Error("not connected");
+  if (isGet) {
+    const params = new URLSearchParams({ action, ...(extraParams || {}) });
+    const res = await fetch(CONFIG.SCRIPT_URL + "?" + params.toString());
+    return res.json();
+  }
+  const res = await fetch(CONFIG.SCRIPT_URL, {
+    method: "POST",
+    headers: { "Content-Type": "text/plain;charset=utf-8" },
+    body: JSON.stringify({ action, ...body })
+  });
+  return res.json();
+}
+
+/* ---------- contour hero graphic ---------- */
+function buildContour() {
+  const wrap = document.getElementById("contourWrap");
+  const size = 400, cx = size / 2, cy = size / 2;
+  const layers = 7;
+  const colors = ["#3A3936", "#4a4844", "#5a5854", "#6a6864", "#7a7874", "var(--accent-teal)", "var(--accent)"];
+  let paths = "";
+  for (let l = 0; l < layers; l++) {
+    const r = 30 + l * 24;
+    const points = 10;
+    const wobble = 6 + l * 1.2;
+    let d = "";
+    const pts = [];
+    for (let i = 0; i < points; i++) {
+      const ang = (i / points) * Math.PI * 2;
+      const seedOffset = Math.sin(ang * 3 + l * 1.7) * wobble + Math.cos(ang * 2 + l) * (wobble * 0.5);
+      const rr = r + seedOffset;
+      pts.push([cx + Math.cos(ang) * rr, cy + Math.sin(ang) * rr]);
+    }
+    d = "M " + pts[0][0].toFixed(1) + " " + pts[0][1].toFixed(1) + " ";
+    for (let i = 1; i <= points; i++) {
+      const p0 = pts[(i - 1 + points) % points];
+      const p1 = pts[i % points];
+      const mx = (p0[0] + p1[0]) / 2, my = (p0[1] + p1[1]) / 2;
+      d += "Q " + p0[0].toFixed(1) + " " + p0[1].toFixed(1) + " " + mx.toFixed(1) + " " + my.toFixed(1) + " ";
+    }
+    d += "Z";
+    paths += `<path d="${d}" fill="none" stroke="${colors[l]}" stroke-width="1.4" opacity="${0.55 + l * 0.06}"/>`;
+  }
+  wrap.innerHTML = `<svg viewBox="0 0 ${size} ${size}" style="width:100%;height:100%;">${paths}</svg>`;
+}
+buildContour();
+
+/* ---------- toast ---------- */
+function toast(msg) {
+  const t = document.getElementById("toast");
+  t.textContent = msg;
+  t.classList.add("show");
+  clearTimeout(t._timer);
+  t._timer = setTimeout(() => t.classList.remove("show"), 2400);
+}
+
+/* ---------- catalog render ---------- */
+function renderCatalog(items) {
+  const grid = document.getElementById("catalogGrid");
+  const empty = document.getElementById("emptyNote");
+  document.getElementById("itemCount").textContent = items.length ? items.length + (items.length === 1 ? " item" : " items") : "";
+  if (!items.length) {
+    grid.innerHTML = "";
+    empty.style.display = "block";
+    return;
+  }
+  empty.style.display = "none";
+  grid.innerHTML = items.map(it => `
+    <div class="card">
+      <div class="thumb">
+        ${it.ImageURL ? `<img src="${escapeAttr(it.ImageURL)}" alt="">` : `<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9" fill="none" stroke="#9A968C" stroke-width="1.2"/><circle cx="12" cy="12" r="4" fill="none" stroke="#9A968C" stroke-width="1.2"/></svg>`}
+      </div>
+      <h3>${escapeHtml(it.Name)}</h3>
+      <div class="desc">${escapeHtml(it.Description || "")}</div>
+      <div class="row">
+        <span class="price">${formatPrice(it.Price)}</span>
+        <button class="btn small" data-order="${escapeAttr(it.ID)}" ${isConnected ? "" : "disabled"}>Order</button>
+      </div>
+    </div>
+  `).join("");
+  grid.querySelectorAll("[data-order]").forEach(btn => {
+    btn.addEventListener("click", () => openOrderModal(btn.getAttribute("data-order")));
+  });
+}
+
+async function loadCatalog() {
+  if (!isConnected) {
+    currentItems = DEMO_ITEMS;
+    renderCatalog(currentItems);
+    return;
+  }
+  try {
+    const items = await api("getItems", null, true);
+    currentItems = Array.isArray(items) ? items : [];
+    renderCatalog(currentItems);
+  } catch (e) {
+    toast("Couldn't load the catalog. Check the connection.");
+  }
+}
+loadCatalog();
+
+function escapeHtml(s) { return String(s || "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c])); }
+function escapeAttr(s) { return escapeHtml(s); }
+function formatPrice(n) { return "KSh " + Number(n).toLocaleString("en-KE", { minimumFractionDigits: 2, maximumFractionDigits: 2 }); }
+
+/* ---------- order modal ---------- */
+const orderOverlay = document.getElementById("orderOverlay");
+function openOrderModal(itemId) {
+  selectedItem = currentItems.find(i => i.ID === itemId);
+  if (!selectedItem) return;
+  document.getElementById("orderItemName").textContent = selectedItem.Name;
+  document.getElementById("orderItemPrice").textContent = formatPrice(selectedItem.Price);
+  document.getElementById("custName").value = "";
+  document.getElementById("custNotes").value = "";
+  document.getElementById("orderError").style.display = "none";
+  document.getElementById("orderFormStep").style.display = "block";
+  document.getElementById("orderConfirmStep").style.display = "none";
+  orderOverlay.classList.add("open");
+}
+document.getElementById("closeOrderModal").addEventListener("click", () => orderOverlay.classList.remove("open"));
+orderOverlay.addEventListener("click", e => { if (e.target === orderOverlay) orderOverlay.classList.remove("open"); });
+
+document.getElementById("submitOrder").addEventListener("click", async () => {
+  const name = document.getElementById("custName").value.trim();
+  const errEl = document.getElementById("orderError");
+  if (!name) { errEl.textContent = "Enter your name so we know whose order this is."; errEl.style.display = "block"; return; }
+  const notes = document.getElementById("custNotes").value.trim();
+  const btn = document.getElementById("submitOrder");
+  btn.disabled = true; btn.textContent = "Placing order…";
+  try {
+    const res = await api("placeOrder", { customerName: name, itemId: selectedItem.ID, notes });
+    if (res.success) {
+      document.getElementById("confirmText").textContent = `Thanks, ${name} — your ${selectedItem.Name} is in the queue.`;
+      document.getElementById("orderFormStep").style.display = "none";
+      document.getElementById("orderConfirmStep").style.display = "block";
+    } else {
+      errEl.textContent = res.error || "Something went wrong. Try again.";
+      errEl.style.display = "block";
+    }
+  } catch (e) {
+    errEl.textContent = "Couldn't reach the shop. Try again in a moment.";
+    errEl.style.display = "block";
+  }
+  btn.disabled = false; btn.textContent = "Place order";
+});
+document.getElementById("closeConfirm").addEventListener("click", () => orderOverlay.classList.remove("open"));
+
+/* ======================================================
+   ADMIN
+====================================================== */
+const storefrontView = document.getElementById("storefrontView");
+const adminView = document.getElementById("adminView");
+const adminLoginScreen = document.getElementById("adminLoginScreen");
+const adminDashboard = document.getElementById("adminDashboard");
+
+function showAdmin() {
+  storefrontView.classList.add("hidden");
+  adminView.classList.add("open");
+  if (adminToken) { adminLoginScreen.style.display = "none"; adminDashboard.style.display = "block"; loadAdminData(); }
+  else { adminLoginScreen.style.display = "block"; adminDashboard.style.display = "none"; }
+}
+function showStore() {
+  adminView.classList.remove("open");
+  storefrontView.classList.remove("hidden");
+  loadCatalog();
+}
+document.getElementById("ownerLink").addEventListener("click", showAdmin);
+document.getElementById("backToStore").addEventListener("click", showStore);
+document.getElementById("viewShopBtn").addEventListener("click", showStore);
+document.getElementById("logoutBtn").addEventListener("click", () => {
+  adminToken = null;
+  sessionStorage.removeItem("adminToken");
+  showAdmin();
+});
+
+document.getElementById("doLogin").addEventListener("click", doLogin);
+document.getElementById("adminPass").addEventListener("keydown", e => { if (e.key === "Enter") doLogin(); });
+
+async function doLogin() {
+  const errEl = document.getElementById("loginError");
+  errEl.style.display = "none";
+  if (!isConnected) { errEl.textContent = "Backend isn't connected yet — nothing to sign in to."; errEl.style.display = "block"; return; }
+  const pass = document.getElementById("adminPass").value;
+  const btn = document.getElementById("doLogin");
+  btn.disabled = true; btn.textContent = "Signing in…";
+  try {
+    const res = await api("adminLogin", { password: pass });
+    if (res.success) {
+      adminToken = res.token;
+      sessionStorage.setItem("adminToken", adminToken);
+      document.getElementById("adminPass").value = "";
+      adminLoginScreen.style.display = "none";
+      adminDashboard.style.display = "block";
+      loadAdminData();
+    } else {
+      errEl.textContent = "Wrong password.";
+      errEl.style.display = "block";
+    }
+  } catch (e) {
+    errEl.textContent = "Couldn't reach the shop backend.";
+    errEl.style.display = "block";
+  }
+  btn.disabled = false; btn.textContent = "Sign in";
+}
+
+/* ---- tabs ---- */
+document.querySelectorAll(".admin-tabs button").forEach(btn => {
+  btn.addEventListener("click", () => {
+    document.querySelectorAll(".admin-tabs button").forEach(b => b.classList.remove("active"));
+    btn.classList.add("active");
+    const tab = btn.getAttribute("data-tab");
+    document.getElementById("ordersTab").style.display = tab === "orders" ? "block" : "none";
+    document.getElementById("itemsTab").style.display = tab === "items" ? "block" : "none";
+  });
+});
+
+async function loadAdminData() {
+  await Promise.all([loadOrders(), loadAdminItems()]);
+}
+
+async function loadOrders() {
+  try {
+    const orders = await api("getOrders", null, true, { token: adminToken });
+    if (orders.error) return handleAuthError();
+    renderOrders(orders);
+  } catch (e) { toast("Couldn't load orders."); }
+}
+
+function renderOrders(orders) {
+  const body = document.getElementById("ordersBody");
+  document.getElementById("ordersEmpty").style.display = orders.length ? "none" : "block";
+  body.innerHTML = orders.map(o => `
+    <tr data-id="${escapeAttr(o.ID)}">
+      <td class="cust-name">${escapeHtml(o.CustomerName)}</td>
+      <td>${escapeHtml(o.ItemName)}</td>
+      <td>${formatPrice(o.Price)}</td>
+      <td class="muted-sm">${escapeHtml(o.Notes || "—")}</td>
+      <td class="muted-sm">${formatDate(o.Timestamp)}</td>
+      <td>
+        <label class="switch">
+          <input type="checkbox" class="paidToggle" ${o.Paid === true || o.Paid === "TRUE" ? "checked" : ""}>
+          <span class="track"></span>
+          <span class="lbl paid-lbl">${o.Paid === true || o.Paid === "TRUE" ? "Paid" : "Unpaid"}</span>
+        </label>
+      </td>
+      <td><button class="btn danger small delOrder">Remove</button></td>
+    </tr>
+  `).join("");
+
+  body.querySelectorAll(".paidToggle").forEach(cb => {
+    cb.addEventListener("change", async (e) => {
+      const row = e.target.closest("tr");
+      const id = row.getAttribute("data-id");
+      const paid = e.target.checked;
+      row.querySelector(".paid-lbl").textContent = paid ? "Paid" : "Unpaid";
+      try {
+        const res = await api("togglePaid", { orderId: id, paid, token: adminToken });
+        if (!res.success) toast("Couldn't update — try again.");
+      } catch (err) { toast("Couldn't update — try again."); }
+    });
+  });
+  body.querySelectorAll(".delOrder").forEach(b => {
+    b.addEventListener("click", async (e) => {
+      const row = e.target.closest("tr");
+      const id = row.getAttribute("data-id");
+      if (!confirm("Remove this order?")) return;
+      const res = await api("deleteOrder", { orderId: id, token: adminToken });
+      if (res.success) loadOrders(); else toast("Couldn't remove order.");
+    });
+  });
+}
+
+function formatDate(ts) {
+  try {
+    const d = new Date(ts);
+    return d.toLocaleDateString(undefined, { month: "short", day: "numeric" }) + " · " + d.toLocaleTimeString(undefined, { hour: "numeric", minute: "2-digit" });
+  } catch (e) { return ts; }
+}
+
+let adminItems = [];
+async function loadAdminItems() {
+  try {
+    const items = await api("getAllItems", null, true, { token: adminToken });
+    if (items.error) return handleAuthError();
+    adminItems = items;
+    renderAdminItems(items);
+  } catch (e) { toast("Couldn't load items."); }
+}
+
+function renderAdminItems(items) {
+  const body = document.getElementById("itemsBody");
+  document.getElementById("itemsEmpty").style.display = items.length ? "none" : "block";
+  body.innerHTML = items.map(it => `
+    <tr data-id="${escapeAttr(it.ID)}">
+      <td><input class="f-name" value="${escapeAttr(it.Name)}"></td>
+      <td><input class="f-price" type="number" step="0.01" value="${Number(it.Price)}"></td>
+      <td><input class="f-desc" value="${escapeAttr(it.Description || "")}"></td>
+      <td><input class="f-img" value="${escapeAttr(it.ImageURL || "")}"></td>
+      <td>
+        <label class="switch">
+          <input type="checkbox" class="f-active" ${it.Active === true || it.Active === "TRUE" ? "checked" : ""}>
+          <span class="track"></span>
+        </label>
+      </td>
+      <td style="display:flex; gap:6px;">
+        <button class="btn small saveItem">Save</button>
+        <button class="btn danger small delItem">Delete</button>
+      </td>
+    </tr>
+  `).join("");
+
+  body.querySelectorAll(".saveItem").forEach(b => {
+    b.addEventListener("click", async (e) => {
+      const row = e.target.closest("tr");
+      const id = row.getAttribute("data-id");
+      const payload = {
+        id,
+        name: row.querySelector(".f-name").value.trim(),
+        price: row.querySelector(".f-price").value,
+        description: row.querySelector(".f-desc").value.trim(),
+        imageUrl: row.querySelector(".f-img").value.trim(),
+        active: row.querySelector(".f-active").checked,
+        token: adminToken
+      };
+      const res = await api("updateItem", payload);
+      if (res.success) toast("Saved."); else toast("Couldn't save.");
+    });
+  });
+  body.querySelectorAll(".delItem").forEach(b => {
+    b.addEventListener("click", async (e) => {
+      const row = e.target.closest("tr");
+      const id = row.getAttribute("data-id");
+      if (!confirm("Delete this item?")) return;
+      const res = await api("deleteItem", { id, token: adminToken });
+      if (res.success) loadAdminItems(); else toast("Couldn't delete.");
+    });
+  });
+}
+
+document.getElementById("addItemBtn").addEventListener("click", async () => {
+  const name = document.getElementById("newItemName").value.trim();
+  const price = document.getElementById("newItemPrice").value;
+  const description = document.getElementById("newItemDesc").value.trim();
+  const imageUrl = document.getElementById("newItemImg").value.trim();
+  if (!name || !price) { toast("Name and price are required."); return; }
+  const res = await api("addItem", { name, price, description, imageUrl, token: adminToken });
+  if (res.success) {
+    document.getElementById("newItemName").value = "";
+    document.getElementById("newItemPrice").value = "";
+    document.getElementById("newItemDesc").value = "";
+    document.getElementById("newItemImg").value = "";
+    loadAdminItems();
+    toast("Item added.");
+  } else toast("Couldn't add item.");
+});
+
+function handleAuthError() {
+  adminToken = null;
+  sessionStorage.removeItem("adminToken");
+  showAdmin();
+  toast("Session expired — sign in again.");
+}
+</script>
+</body>
+</html>
