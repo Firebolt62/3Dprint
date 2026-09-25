@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>Contour</title>
+<title>Contour — 3D Printed Goods</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
@@ -155,6 +155,42 @@
   .stale-note { font-size: 11.5px; color: var(--muted); text-align: center; padding: 6px 0 0; }
   .table-loading td { color: var(--muted); font-size: 13.5px; padding: 20px 12px; }
 
+  .custom-panel {
+    margin-top: 40px;
+    border: 1px solid var(--line);
+    background: var(--panel);
+    padding: 30px;
+    display: flex; align-items: center; justify-content: space-between;
+    gap: 20px;
+    flex-wrap: wrap;
+  }
+  .custom-panel h3 { font-size: 18px; margin-bottom: 6px; }
+  .custom-panel p { color: var(--muted); font-size: 14px; max-width: 46ch; margin: 0; }
+
+  .segmented { display: flex; border: 1px solid var(--line-strong); border-radius: var(--radius); overflow: hidden; margin-bottom: 4px; }
+  .segmented button {
+    flex: 1; background: var(--bg); border: none; color: var(--muted);
+    padding: 9px 10px; font-size: 13px; font-family: inherit;
+  }
+  .segmented button.active { background: var(--accent); color: #17181A; font-weight: 600; }
+
+  .file-drop {
+    border: 1px dashed var(--line-strong); border-radius: var(--radius);
+    padding: 16px; text-align: center; font-size: 13px; color: var(--muted);
+    cursor: pointer; position: relative;
+  }
+  .file-drop input[type=file] { position: absolute; inset: 0; opacity: 0; cursor: pointer; width: 100%; height: 100%; }
+  .file-drop.has-file { color: var(--text); border-color: var(--accent-teal); border-style: solid; }
+  .file-hint { font-size: 11.5px; color: var(--muted); margin-top: 6px; }
+
+  .badge-custom {
+    display: inline-block; font-size: 10.5px; text-transform: uppercase; letter-spacing: 0.04em;
+    color: var(--accent-teal); border: 1px solid rgba(79,166,154,0.4); border-radius: 3px;
+    padding: 1px 6px; margin-left: 6px; vertical-align: middle;
+  }
+  .ref-link { font-size: 12.5px; color: var(--accent-teal); text-decoration: none; }
+  .ref-link:hover { text-decoration: underline; }
+
   /* ---------- footer ---------- */
   footer.site {
     border-top: 1px solid var(--line);
@@ -301,7 +337,7 @@
     <div class="wrap">
       <div>
         <h1>Small-batch prints,<br>made to order.</h1>
-        <p class="lede">Every piece is printed after you order it. Pick something below, tell me your name, and I'll get it on the plate.</p>
+        <p class="lede">Every piece is printed after you order it — pick something below, tell me your name, and I'll get it on the plate.</p>
         <div class="cta-row">
           <a href="#catalog" class="btn">Browse the catalog</a>
           <span class="fine">Usually printed within a few days</span>
@@ -317,7 +353,15 @@
       <span class="count" id="itemCount"></span>
     </div>
     <div class="grid" id="catalogGrid"></div>
-    <div class="empty-note" id="emptyNote" style="display:none;">Nothing listed yet. Check back soon.</div>
+    <div class="empty-note" id="emptyNote" style="display:none;">Nothing listed yet — check back soon.</div>
+
+    <div class="custom-panel">
+      <div>
+        <h3>Have your own design?</h3>
+        <p>Send an STL, 3MF, reference image, or a link to a model — I'll quote and print it.</p>
+      </div>
+      <button class="btn ghost" id="customOrderBtn">Request a custom print</button>
+    </div>
   </section>
 
   <footer class="site wrap">
@@ -357,7 +401,53 @@
   </div>
 </div>
 
-<!-- ============ ADMIN: LOGIN ============ -->
+<!-- ============ CUSTOM ORDER MODAL ============ -->
+<div class="overlay" id="customOverlay">
+  <div class="modal">
+    <button class="modal-close" id="closeCustomModal">&times;</button>
+    <div id="customFormStep">
+      <h3>Custom print request</h3>
+      <div class="sub">Tell me what you need — a file, an image, or a link all work.</div>
+      <div class="field">
+        <label for="customName">Your name</label>
+        <input type="text" id="customName" placeholder="Who's this for?">
+      </div>
+      <div class="field">
+        <label for="customDetails">What do you need?</label>
+        <textarea id="customDetails" placeholder="Size, color, quantity, deadline — anything that helps me quote it."></textarea>
+      </div>
+      <div class="field">
+        <label>Reference</label>
+        <div class="segmented">
+          <button type="button" class="seg-file active" data-mode="file">Attach a file</button>
+          <button type="button" class="seg-link" data-mode="link">Paste a link</button>
+        </div>
+        <div id="customFileWrap">
+          <label class="file-drop" id="fileDropLabel">
+            <span id="fileDropText">Click to choose a file, or drag it here</span>
+            <input type="file" id="customFile" accept=".stl,.3mf,.png,.jpg,.jpeg,.webp">
+          </label>
+          <div class="file-hint">STL, 3MF, PNG or JPG — up to 30MB</div>
+        </div>
+        <div id="customLinkWrap" style="display:none;">
+          <input type="text" id="customLink" placeholder="https://...">
+        </div>
+      </div>
+      <div id="customError" class="error-msg" style="display:none;"></div>
+      <div class="modal-actions">
+        <button class="btn" id="submitCustomOrder" style="flex:1;">Send request</button>
+      </div>
+    </div>
+    <div id="customConfirmStep" style="display:none;">
+      <div class="confirm-box">
+        <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M8 12.5l2.5 2.5L16 9"/></svg>
+        <h3>Request sent</h3>
+        <p class="sub" id="customConfirmText"></p>
+        <button class="btn" id="closeCustomConfirm" style="width:100%;margin-top:6px;">Done</button>
+      </div>
+    </div>
+  </div>
+</div>
 <div id="adminView">
   <div id="adminLoginScreen" class="login-wrap">
     <h2>Host panel</h2>
@@ -395,7 +485,7 @@
 
       <div id="ordersTab">
         <table class="data" id="ordersTable">
-          <thead><tr><th>Customer</th><th>Item</th><th>Price (KSh)</th><th>Notes</th><th>When</th><th>Paid</th><th></th></tr></thead>
+          <thead><tr><th>Customer</th><th>Item</th><th>Price (KSh)</th><th>Notes</th><th>Reference</th><th>When</th><th>Paid</th><th></th></tr></thead>
           <tbody id="ordersBody"></tbody>
         </table>
         <div class="empty-note" id="ordersEmpty" style="display:none;">No orders yet.</div>
@@ -644,6 +734,116 @@ document.getElementById("submitOrder").addEventListener("click", async () => {
 });
 document.getElementById("closeConfirm").addEventListener("click", () => orderOverlay.classList.remove("open"));
 
+/* ---------- custom order modal ---------- */
+const customOverlay = document.getElementById("customOverlay");
+let customMode = "file";
+let customFile = null;
+
+document.getElementById("customOrderBtn").addEventListener("click", () => {
+  document.getElementById("customName").value = "";
+  document.getElementById("customDetails").value = "";
+  document.getElementById("customLink").value = "";
+  document.getElementById("customFile").value = "";
+  customFile = null;
+  document.getElementById("fileDropText").textContent = "Click to choose a file, or drag it here";
+  document.getElementById("fileDropLabel").classList.remove("has-file");
+  document.getElementById("customError").style.display = "none";
+  document.getElementById("customFormStep").style.display = "block";
+  document.getElementById("customConfirmStep").style.display = "none";
+  setCustomMode("file");
+  customOverlay.classList.add("open");
+});
+document.getElementById("closeCustomModal").addEventListener("click", () => customOverlay.classList.remove("open"));
+document.getElementById("closeCustomConfirm").addEventListener("click", () => customOverlay.classList.remove("open"));
+customOverlay.addEventListener("click", e => { if (e.target === customOverlay) customOverlay.classList.remove("open"); });
+
+function setCustomMode(mode) {
+  customMode = mode;
+  document.querySelector(".seg-file").classList.toggle("active", mode === "file");
+  document.querySelector(".seg-link").classList.toggle("active", mode === "link");
+  document.getElementById("customFileWrap").style.display = mode === "file" ? "block" : "none";
+  document.getElementById("customLinkWrap").style.display = mode === "link" ? "block" : "none";
+}
+document.querySelector(".seg-file").addEventListener("click", () => setCustomMode("file"));
+document.querySelector(".seg-link").addEventListener("click", () => setCustomMode("link"));
+
+document.getElementById("customFile").addEventListener("change", (e) => {
+  const f = e.target.files[0];
+  const errEl = document.getElementById("customError");
+  errEl.style.display = "none";
+  if (!f) { customFile = null; return; }
+  const okExt = /\.(stl|3mf|png|jpe?g|webp)$/i.test(f.name);
+  if (!okExt) {
+    errEl.textContent = "That file type isn't supported — use STL, 3MF, PNG or JPG.";
+    errEl.style.display = "block";
+    e.target.value = ""; customFile = null;
+    return;
+  }
+  if (f.size > 30 * 1024 * 1024) {
+    errEl.textContent = "That file's over 30MB — try compressing it or send a link instead.";
+    errEl.style.display = "block";
+    e.target.value = ""; customFile = null;
+    return;
+  }
+  customFile = f;
+  document.getElementById("fileDropText").textContent = f.name;
+  document.getElementById("fileDropLabel").classList.add("has-file");
+});
+
+async function uploadCustomFile(file) {
+  const safeName = file.name.replace(/[^a-zA-Z0-9._-]/g, "_");
+  const path = `custom/${Date.now()}-${Math.random().toString(36).slice(2, 8)}-${safeName}`;
+  const res = await fetch(`${CONFIG.SUPABASE_URL}/storage/v1/object/uploads/${path}`, {
+    method: "POST",
+    headers: {
+      apikey: CONFIG.SUPABASE_ANON_KEY,
+      Authorization: "Bearer " + CONFIG.SUPABASE_ANON_KEY,
+      "Content-Type": file.type || "application/octet-stream"
+    },
+    body: file
+  });
+  if (!res.ok) throw new Error("upload failed");
+  return `${CONFIG.SUPABASE_URL}/storage/v1/object/public/uploads/${path}`;
+}
+
+document.getElementById("submitCustomOrder").addEventListener("click", async () => {
+  const errEl = document.getElementById("customError");
+  errEl.style.display = "none";
+  const name = document.getElementById("customName").value.trim();
+  const details = document.getElementById("customDetails").value.trim();
+  const link = document.getElementById("customLink").value.trim();
+
+  if (!name) { errEl.textContent = "Enter your name."; errEl.style.display = "block"; return; }
+  if (!details) { errEl.textContent = "Add a quick description of what you need."; errEl.style.display = "block"; return; }
+  if (customMode === "link" && link && !/^https?:\/\//i.test(link)) {
+    errEl.textContent = "Links should start with http:// or https://"; errEl.style.display = "block"; return;
+  }
+
+  const btn = document.getElementById("submitCustomOrder");
+  btn.disabled = true;
+  try {
+    let fileUrl = "";
+    if (customMode === "file" && customFile) {
+      btn.textContent = "Uploading file…";
+      fileUrl = await uploadCustomFile(customFile);
+    }
+    btn.textContent = "Sending…";
+    await rpc("place_custom_order", {
+      p_customer_name: name,
+      p_details: details,
+      p_file_url: fileUrl,
+      p_reference_link: customMode === "link" ? link : ""
+    });
+    document.getElementById("customConfirmText").textContent = `Thanks, ${name} — I'll take a look and follow up on pricing.`;
+    document.getElementById("customFormStep").style.display = "none";
+    document.getElementById("customConfirmStep").style.display = "block";
+  } catch (e) {
+    errEl.textContent = "Couldn't send that — check your connection and try again.";
+    errEl.style.display = "block";
+  }
+  btn.disabled = false; btn.textContent = "Send request";
+});
+
 /* ======================================================
    ADMIN
 ====================================================== */
@@ -719,7 +919,7 @@ async function loadAdminData() {
 
 async function loadOrders() {
   document.getElementById("ordersEmpty").style.display = "none";
-  document.getElementById("ordersBody").innerHTML = `<tr class="table-loading"><td colspan="7">Loading orders…</td></tr>`;
+  document.getElementById("ordersBody").innerHTML = `<tr class="table-loading"><td colspan="8">Loading orders…</td></tr>`;
   try {
     const orders = await rpc("admin_get_orders", { t: adminToken });
     renderOrders(orders);
@@ -735,9 +935,10 @@ function renderOrders(orders) {
   body.innerHTML = orders.map(o => `
     <tr data-id="${escapeAttr(o.id)}">
       <td class="cust-name">${escapeHtml(o.customer_name)}</td>
-      <td>${escapeHtml(o.item_name)}</td>
-      <td>${formatPrice(o.price)}</td>
+      <td>${escapeHtml(o.item_name)}${o.is_custom ? '<span class="badge-custom">Custom</span>' : ""}</td>
+      <td>${o.price != null ? formatPrice(o.price) : "TBD"}</td>
       <td class="muted-sm">${escapeHtml(o.notes || "—")}</td>
+      <td>${o.file_url ? `<a class="ref-link" href="${escapeAttr(o.file_url)}" target="_blank" rel="noopener">File</a>` : (o.reference_link ? `<a class="ref-link" href="${escapeAttr(o.reference_link)}" target="_blank" rel="noopener">Link</a>` : `<span class="muted-sm">—</span>`)}</td>
       <td class="muted-sm">${formatDate(o.created_at)}</td>
       <td>
         <label class="switch">
